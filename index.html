@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Documents list</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Sans&display=swap" rel="stylesheet">
+    <link href="reset.css" rel="stylesheet" />
+    <link href="index.css" rel="stylesheet" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.4/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/knockout/3.5.0/knockout-min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.13.2/jquery-ui.min.js"></script>
+</head>
+<body>
+    <div class="main">
+        <div class="list" data-bind="foreach: categories">
+            <div class="list__category">
+                <div class="category__header bordered">
+                        <div class="button_reveal">
+                            <img src="assets/single_arrow.svg" data-bind="click: changeVisibility" alt="arrow" style="padding: 4px;">
+                        </div>
+                        <div class="category__name" data-bind="text: name"></div>
+                    <div class="category__button_drag">
+                        <img src="assets/double_arrow.svg" alt="double-sided arrow">
+                    </div>
+                </div>
+                <div class="item__documents" data-bind="foreach: documents, fadeVisible: showCategory">
+                    <div class="document bordered">
+                        <div class="document__name" data-bind="text: name"></div>
+                        <div class="document__button_drag">
+                            <img src="assets/double_arrow.svg" alt="double-sided arrow">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function AppViewModel () {
+            this.animationSpeed = 450;
+
+            this.categories = ko.observableArray([
+                new Category('Обязательные для всех', [new Document("Паспорт"), new Document("ИНН")]),
+                new Category('Обязательные для трудоустройства', [new Document("Трудовой договор"), new Document("Договор для трудоустройства")]),
+                new Category('Специальные', [new Document("Специальный договор"), new Document("Договор специальный")]),
+            ])
+
+        }
+        function Category (name, initialItems) {
+            this.name = name;
+            this.documents = ko.observableArray(initialItems)
+            this.showCategory = ko.observable(true)
+
+            this.changeVisibility = function(data, event) {
+                this.showCategory(!this.showCategory())
+                event.target.classList.toggle('flip')
+            }
+        }
+
+        function Document(name) {
+            this.name = name
+        }
+
+        ko.bindingHandlers.fadeVisible = {
+            init: function(element, valueAccessor) {
+                let value = valueAccessor();
+                $(element).toggle(value());
+            },
+            update: function(element, valueAccessor) {
+                let value = valueAccessor();
+                value() ? $(element).slideDown(this.animationSpeed) : $(element).slideUp(this.animationSpeed);
+            }
+        }
+
+        ko.applyBindings(new AppViewModel())
+
+        $(document).ready(function () {
+            $(".list").sortable({
+                revert: true,
+                disabled: true,
+                placeholder: 'draggable-placeholder'
+            })
+
+            $(".item__documents").sortable({
+                connectWith: '.item__documents',
+                revert: true,
+                disabled: true,
+                placeholder: 'draggable-placeholder'
+            })
+
+            $('.category__button_drag').on('mousedown touchstart', function(e) {
+                $('.list').sortable("option", 'disabled', false)
+                $(this)[0].parentElement.parentElement.classList.toggle('selected-item')
+            }).bind('mouseup touchend', function(e) {
+                $('.list').sortable("option", 'disabled', true)
+                $(this)[0].parentElement.parentElement.classList.toggle('selected-item')
+            })
+
+            $('.document__button_drag').on('mousedown touchstart', function(e) {
+                $('.item__documents').sortable("option", 'disabled', false)
+                $(this)[0].parentElement.classList.toggle('selected-item')
+            }).bind('mouseup touchend', function(e) {
+                $('.item__documents').sortable("option", 'disabled', true)
+                $(this)[0].parentElement.classList.toggle('selected-item')
+            })
+        })
+
+    </script>
+</body>
+</html>
